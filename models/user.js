@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcyrpt = require("bcrypt");
 const saltRounds = 10;
+const jwt = require("jsonwebtoken");
 
 const userSchema = mongoose.Schema({
   name: {
@@ -46,8 +47,32 @@ userSchema.pre("save", function (next) {
         next(); //완성이 되면 돌아간다
       });
     });
+  } else {
+    next();
   }
 });
+
+userSchema.methods.comparePassword = function (plainPassword, cb) {
+  //plainPassword 123456과 암호화된 비밀번호가 일치하는지 봐야함
+  bcyrpt.compare(plainPassword, this.password, function (error, isMatch) {
+    if (error) return cb(error); //이거세미콜론 원래콤마였음
+    cb(null, isMatch);
+  });
+};
+
+userSchema.methods.generateToken = function (cb) {
+  var user = this;
+
+  //jsonwebtoken을 이용해서 token을 생성하기
+
+  var token = jwt.sign(user._id.toHexString(), "secretToken");
+
+  user.token = token;
+  user.save(function (error, user) {
+    if (error) return cb(error);
+    cb(null, user);
+  });
+};
 
 const User = mongoose.model("User", userSchema);
 
