@@ -4,7 +4,7 @@ const port = 5000;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const config = require("./config/key");
-
+const { auth } = require("./middleware/auth");
 const { User } = require("./models/User");
 
 //application/x-www-form-urlencoded
@@ -24,7 +24,7 @@ mongoose
 
 app.get("/", (req, res) => res.send("Hello, Worldddd!"));
 
-app.post("/register", (req, res) => {
+app.post("/api/users/register", (req, res) => {
   //회원 가입때 필요한 정보들을 client에서 가져오면
   //그것들을 database에 넣어준다..
 
@@ -38,7 +38,7 @@ app.post("/register", (req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
+app.post("/api/users/login", (req, res) => {
   //요청한 이메일을 데이터베이스에서 있는지 찾는다.
   User.findOne({ email: req.body.email }, (error, user) => {
     if (!user) {
@@ -68,4 +68,29 @@ app.post("/login", (req, res) => {
     });
   });
 });
+
+app.get("/api/users/auth", auth, (req, res) => {
+  //auth 미드웨어? request를 받은 다음 callback 하기 전에 중간에서
+  //여기까지 미들웨어를 통과했다는건 -> Authentification이 true라는 뜻
+  res.status(200).json({
+    _id: req.user._id,
+    isAdmin: req.user.role === 0 ? false : true,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+    lastName: req.user.lastName,
+    role: req.user.role,
+    image: req.user.image,
+  });
+});
+
+app.get("/api/users/logout", auth, (req, res) => {
+  User.findOneAndUpdate({ _id: req.user._id }, { token: "" }, (error, user) => {
+    if (error) return res.json({ success: false, error });
+    return res.status(200).send({
+      success: true,
+    });
+  });
+});
+
 app.listen(port, () => console.log(`example app listening on port ${port}`));
