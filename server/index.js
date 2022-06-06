@@ -24,6 +24,10 @@ mongoose
 
 app.get("/", (req, res) => res.send("Hello, Worldddd!"));
 
+app.get("/api/hello", (req, res) => {
+  res.send("안녕하세용");
+});
+
 app.post("/api/users/register", (req, res) => {
   //회원 가입때 필요한 정보들을 client에서 가져오면
   //그것들을 database에 넣어준다..
